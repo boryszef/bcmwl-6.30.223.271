@@ -113,7 +113,7 @@ ifeq ($(APIFINAL),WEXT)
   $(info Using Wireless Extension API)
 endif
 
-ifeq ($(shell dpkg --print-architecture),amd64)
+ifeq ($(shell uname -m),x86_64)
 BINARCH = x86_64
 else
 BINARCH = i386
