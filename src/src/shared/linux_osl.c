@@ -932,6 +932,10 @@ osl_getcycles(void)
 	uint cycles;
 
 #if defined(__i386__)
+#ifndef rdtscl
+#define rdtscl(low) \
+ ((low) = (u32)rdtsc())
+#endif
 	rdtscl(cycles);
 #else
 	cycles = 0;

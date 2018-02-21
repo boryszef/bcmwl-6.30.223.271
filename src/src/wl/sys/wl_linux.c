@@ -111,6 +111,10 @@ static void wl_dpc_rxwork(struct wl_task *task);
 
 static int wl_reg_proc_entry(wl_info_t *wl);
 
+#ifndef init_MUTEX
+#define init_MUTEX(sem) sema_init(sem, 1)
+#endif
+
 static int wl_linux_watchdog(void *ctx);
 static
 int wl_found = 0;
@@ -217,7 +221,7 @@ module_param(nompc, int, 0);
 #define to_str(s) #s
 #define quote_str(s) to_str(s)
 
-#define BRCM_WLAN_IFNAME eth%d
+#define BRCM_WLAN_IFNAME wlan%d
 
 static char intf_name[IFNAMSIZ] = quote_str(BRCM_WLAN_IFNAME);
 
@@ -2165,8 +2169,8 @@ wl_start(struct sk_buff *skb, struct net_device *dev)
 	wlif = WL_DEV_IF(dev);
 	wl = WL_INFO(dev);
 
+	skb->prev = NULL;
 	if (WL_ALL_PASSIVE_ENAB(wl) || (WL_RTR() && WL_CONFIG_SMP())) {
-		skb->prev = NULL;
 
 		TXQ_LOCK(wl);
 
@@ -2915,7 +2919,9 @@ wl_monitor(wl_info_t *wl, wl_rxsts_t *rxsts, void *p)
 	if (skb == NULL) return;
 
 	skb->dev = wl->monitor_dev;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
 	skb->dev->last_rx = jiffies;
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 22)
 	skb_reset_mac_header(skb);
 #else
