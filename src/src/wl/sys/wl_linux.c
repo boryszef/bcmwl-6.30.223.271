@@ -93,7 +93,11 @@ struct iw_statistics *wl_get_wireless_stats(struct net_device *dev);
 
 #include <wlc_wowl.h>
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0))
 static void wl_timer(ulong data);
+#else
+static void wl_timer(struct timer_list *tim);
+#endif
 static void _wl_timer(wl_timer_t *t);
 static struct net_device *wl_alloc_linux_if(wl_if_t *wlif);
 
@@ -2302,9 +2306,15 @@ wl_timer_task(wl_task_t *task)
 }
 
 static void
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0))
 wl_timer(ulong data)
 {
 	wl_timer_t *t = (wl_timer_t *)data;
+#else
+wl_timer(struct timer_list *tim)
+{
+	wl_timer_t *t = from_timer(t, tim, timer);
+#endif
 
 	if (!WL_ALL_PASSIVE_ENAB(t->wl))
 		_wl_timer(t);
@@ -2356,9 +2366,13 @@ wl_init_timer(wl_info_t *wl, void (*fn)(void *arg), void *arg, const char *tname
 
 	bzero(t, sizeof(wl_timer_t));
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0))
 	init_timer(&t->timer);
 	t->timer.data = (ulong) t;
 	t->timer.function = wl_timer;
+#else
+	timer_setup(&t->timer, wl_timer, 0);
+#endif
 	t->wl = wl;
 	t->fn = fn;
 	t->arg = arg;
